@@ -1,0 +1,159 @@
+\documentclass[]{article}
+
+\usepackage{amsmath}
+%\usepackage{amssymbol}
+\usepackage{amsthm}
+\usepackage{xeCJK}
+%\usepackage[UTF8]{ctex} 
+%\usepackage{CJKutf8}
+
+\newtheorem{theorem}{Theorem}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\FV}{\operatorname{FV}}
+\newcommand{\preterm}{\Lambda^{-}}
+\newcommand{\deftext}[1]{\textit{\textbf{#1}}}
+\newcommand{\alphaeq}{=_{\alpha}}
+\newcommand{\betared}{\rightarrow_{\beta}}
+%opening
+\title{Type Theory Notes}
+\author{Kreptus}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Chapter 1}
+\subsection{$\lambda$-terms}
+\begin{definition}\label{free variable}
+	For $M \in \preterm$ define the set $\FV(M) \subseteq V$ of \deftext{free variables} of $M$ as follows.
+	\begin{alignat*}{3}
+		&\FV(x) &=\, &\{x\}; \\
+		&\FV(\lambda x. P) &=\, &\FV(P)\setminus \{x\}; \\
+		&\FV(P\, Q) &=\, &\FV(P)\cup \FV(Q).
+	\end{alignat*}
+	If $\FV(M) = \{\}$ then $M$ is said to be \deftext{closed}.
+\end{definition}
+
+\begin{definition}\label{substitution}
+	For $M, N \in \preterm$ and $x \in V$, the \deftext{substitution of $N$ for $x$ in $M$}, written $M[x:= N]\in \preterm$, is defined as follows, where $x \neq y$:
+	\begin{alignat*}{5}
+		&x[x:=N] &= &N; &&\\
+		&y[x:=N] &= &y; &&\\
+		&(P\, Q)[x:=N] &= &P[x:= N]\, Q[x:= N]; &&\\
+		&(\lambda x.P)[x:=N] &= &\lambda x. P; &&\\
+		&(\lambda y. P)[x:= N] &= &\lambda y. P[x:=N], &&\text{ if } y \notin \FV(N) \text{ or } x \notin \FV(P); \\
+		&(\lambda y.P)[x:= N] &= &\lambda z. P[y:= z][x:= N], &&\text{ if } y\in \FV(N) \text{ and } x \in \FV(P),
+	\end{alignat*}  
+	where $z$ is chosen as the $v_i \in V$ with minimal $i$ such that $i \notin \FV(N) \cup \FV(P)$.
+\end{definition}
+
+\begin{definition}\label{alpha equivalence}
+	Define \deftext{$\alpha$-equivalence}, $\alphaeq$, to be the smallest relation on $\preterm$, such that:
+	\begin{align*}
+		&P \alphaeq P &&\text{ for all } P; \\
+		&\lambda x. P \alphaeq \lambda y. P [x:= y] &&\text{ if } y \notin \FV(P),
+	\end{align*}
+	and closed under the rules:
+	\begin{align*}
+		&P \alphaeq P' && \Rightarrow \forall x \in V: \lambda x.P \alphaeq \lambda x.P'; \\
+		&P \alphaeq P' &&\Rightarrow \forall Z \in \preterm : P\, Z \alphaeq P'\, Z; \\
+		&P \alphaeq P' &&\Rightarrow \forall Z \in \preterm : Z\, P \alphaeq Z \, P'; \\
+		&P \alphaeq P' && \Rightarrow P' \alphaeq P; \\
+		&P \alphaeq P' \land  P' \alphaeq P'' && \Rightarrow P \alphaeq P''.
+	\end{align*}
+\end{definition}
+
+\begin{theorem}\label{uniqueness of free variables}
+	If two pre-terms are $\alpha$-equivalent, then their set of free variables are equal, i.e. $$M \alphaeq N \implies \FV(M) = \FV(N).$$
+\end{theorem}
+\begin{proof}
+	We prove by induction.
+	
+	For the base cases of Def.~\ref{alpha equivalence}, the first situation has the preterm $P$ on both sides, and clearly $\FV(P) = \FV(P)$. In the second situation, the right hand side is $\lambda y. P[x:=y]$, which gives us the set of free variables 
+	\begin{align*}
+		\FV(\lambda y. P[x:= y]) &= \FV(P[x:= y])\setminus \{y\} \\
+		&= \begin{cases}
+			(\FV(P)\setminus \{x\} \cup \{y\})\setminus \{y\},\, &x \in \FV(P) \\
+			\FV(P), \, &x \notin \FV(P)
+		\end{cases}\\
+		&= FV(\lambda x. P).
+	\end{align*}
+	
+	Now take already proven $\alpha$-equivalences  $P \alphaeq P'$, $P' \alphaeq P''$, and assume as induction hypothesis that $\FV(P) = \FV(P')$ and $\FV(P') = \FV(P'')$. Then
+	\begin{align*}
+		&\forall x \in V: \FV(\lambda x. P) = \FV(P) \setminus \{x\} = \FV(P') \setminus \{x\} = \FV(\lambda x. P') \\
+		&\forall Z \in \preterm : \begin{cases}
+			\FV(P\, Z) = \FV(P)\cup \FV(Z) = \FV(P') \cup \FV(Z) = \FV(P'\, Z) \\
+			\FV(Z\, P) = \FV(Z\, P')
+		\end{cases}  \\
+		&\FV(P) = \FV(P') \iff \FV(P') = \FV(P) \\
+		&\FV(P) = \FV(P') = \FV(P'')
+	\end{align*}
+	Since the property holds for all base cases and is preserved by all  structural closure rules, we conclude by induction on the derivation of $\alpha$-equivalence that $M \alphaeq N \implies \FV(M) = \FV(N)$.
+\end{proof}
+
+\begin{definition}
+	Define for any $M \in \preterm$, the equivalence class $[M]_{\alpha}$ by: 
+	$$[M]_{\alpha} = \{N \in\preterm : M \alphaeq N\}$$
+	Then define the set $\Lambda$ of \deftext{$\lambda$-terms} by:
+	$$\Lambda =  \preterm \!/\! =_{\alpha} = \{[M]_{\alpha} : M \in \preterm \}$$
+\end{definition}
+
+In the remainder of this, we will denote $\lambda$-terms $[M]_{\alpha}$ as just $M$. There should be no ambiguity between pre-terms and $\lambda$-terms unless we explicitly state that it denotes a pre-term.
+
+\begin{definition}
+	For $M \in \Lambda$ define the set $\FV(M) \subseteq V$ of free variables of $M$ as follows:
+	\begin{align*}
+		\FV(x) &= \{x\}; \\
+		\FV(\lambda x. P) &= \FV(P)\setminus \{x\}; \\
+		\FV(P\, Q) &= \FV(P) \cup \FV(Q).
+	\end{align*}
+	If $\FV(M) = \{\}$, then $M$ is called \deftext{closed}.
+\end{definition}
+
+This definition works because of the invariance we established of the set of free variables in Theorem \ref{uniqueness of free variables}.
+
+\begin{definition}
+	For $M, N \in \Lambda$ and $x \in V$, the \deftext{substitution of $N$ for $x$ in $M$}, written $M[x:= N]$, is defined as follows:
+	\begin{alignat*}{5}
+		&x[x:=N] &= &N; &&\\
+		&y[x:=N] &= &y, &&\text{if } x \neq y;\\
+		&(P\, Q)[x:=N] &= &P[x:= N]\, Q[x:= N]; &&\\
+		&(\lambda y. P)[x:= N] &= &\lambda y. P[x:=N], &&\text{ if } x \neq y \text{, where } y \notin \FV(N); 
+	\end{alignat*}	
+\end{definition}
+
+Example: 
+\begin{align*}
+	(\lambda x. x\,y)[x:= \lambda z.z] &= (\lambda w. w\, y)[x:= \lambda z.z] \\
+	&= \lambda w.w\, y [x:= \lambda z. z] \\
+	&= \lambda w.w\, y  
+\end{align*}
+\begin{align*}
+	(\lambda x. x\,y)[y := \lambda z.z] &= \lambda x. x\, y [y:= \lambda z.z] \\
+	&= \lambda x.x \, \lambda z.z 
+\end{align*}
+
+
+
+\subsection{Reduction}
+\begin{definition}
+	Let $\betared$ be the smallest relation on $\Lambda$ such that $$(\lambda x. P)\, Q \betared P[x:= Q],$$
+	and closed under the rules:
+	\begin{align*}
+		&P \betared P' && \Rightarrow \forall x \in V: \lambda x.P \betared \lambda x.P'; \\
+		&P \betared P' &&\Rightarrow \forall Z \in \Lambda : P\, Z \betared P'\, Z; \\
+		&P \betared P' &&\Rightarrow \forall Z \in \Lambda : Z\, P \betared Z \, P'.
+	\end{align*}
+\end{definition}
+
+A term of the form $(\lambda x. P)\, Q$ is called a \deftext{$\beta$-redex}, and $P[x := Q]$ is called its \deftext{$\beta$-contractum}. A term $M$ is a \deftext{$\beta$-normal form} if there is no term $N$ with $M \betared N$. 
+
+\end{document}
